@@ -1,0 +1,11 @@
+{
+  "javascript.implicitProjectConfig.experimentalDecorators": true,
+  "editor.formatOnType": true,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.autoIndent": true,
+  "prettier.printWidth": 140,
+  "prettier.semi": false,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all"
+}
