@@ -1,9 +1,8 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express')
+const router = express.Router()
+const spreadSheetRoutes = require('./spreadsheet_routes')
+const googleAccess = require('../middlewares/google-access')
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.json("Hello world")
-});
+router.use('/spreadsheet', googleAccess, spreadSheetRoutes)
 
-module.exports = router;
+module.exports = router
