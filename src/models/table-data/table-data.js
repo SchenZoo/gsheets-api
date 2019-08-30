@@ -6,11 +6,13 @@ class TableData {
    * @param {string[]} propNames
    * @param {string[][]} rows
    * @param {string[]} keyFields
+   * @param {string} uniqueIdentifier
    */
-  constructor(propNames, rows, keyFields) {
+  constructor(propNames, rows, keyFields, uniqueIdentifier) {
     this.propNames = propNames
     this.rows = rows
     this.keyFields = keyFields
+    this.uniqueIdentifier = uniqueIdentifier
   }
 
   /**
@@ -20,7 +22,7 @@ class TableData {
    */
   getRowData(index) {
     const row = this.rows[index]
-    return new RowData(row, this.propNames, this.keyFields, 'email')
+    return new RowData(row, this.propNames, this.keyFields, this.uniqueIdentifier)
   }
 
   /**

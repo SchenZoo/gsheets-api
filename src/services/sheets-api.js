@@ -1,6 +1,6 @@
 const { google } = require('googleapis')
 const { TableData } = require('../models/table-data/table-data')
-const { GOOGLE_MAIN_FIELDS } = require('../constants/google-main-fields')
+const { GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD } = require('../constants/google-main-fields')
 
 class SheetsApi {
   /**
@@ -126,8 +126,8 @@ class SheetsApi {
    */
   async concatTabs(spreadsheetId, tabA, tabB, tabC) {
     const [tabAData, tabBData] = await Promise.all([this.getFullSheetTab(spreadsheetId, tabA), this.getFullSheetTab(spreadsheetId, tabB)])
-    const tableAData = new TableData(tabAData.propNames, tabAData.rows, GOOGLE_MAIN_FIELDS)
-    const tableBData = new TableData(tabBData.propNames, tabBData.rows, GOOGLE_MAIN_FIELDS)
+    const tableAData = new TableData(tabAData.propNames, tabAData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD)
+    const tableBData = new TableData(tabBData.propNames, tabBData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD)
     const mergedData = TableData.concatData(tableAData, tableBData)
     await this.saveTabData(spreadsheetId, mergedData.rows, mergedData.propNames, tabC)
     return mergedData
