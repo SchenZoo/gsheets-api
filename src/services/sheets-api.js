@@ -1,25 +1,41 @@
 const { google } = require('googleapis')
-const createError = require('http-errors')
 const { TableData } = require('../models/table-data/table-data')
 const { GOOGLE_MAIN_FIELDS } = require('../constants/google-main-fields')
 
 class SheetsApi {
+  /**
+   * @param {any} request nodejs Request object
+   */
   constructor(request) {
     if (!request.oauth2Client) {
-      throw new Error('Route required google authorization')
+      throw new Error('Route requires google authorization')
     }
     this.oauth2Client = request.oauth2Client
     this.sheets = google.sheets({ version: 'v4', auth: this.oauth2Client })
   }
 
+  /**
+   * Get name of the tabs from given Google spreadsheet
+   * @param {string} spreadsheetId  id of Google spreadsheet
+   * @returns {string[]}
+   */
   async getSheetsTabNames(spreadsheetId) {
     return this.getSheetsMetadata(spreadsheetId).then(data => data.map(sheet => sheet.title))
   }
 
+  /**
+   * Get spreadsheet information
+   * @param {string} spreadsheetId id of Google spreadsheet
+   */
   async getSheetsMetadata(spreadsheetId) {
     return this.sheets.spreadsheets.get({ spreadsheetId }).then(res => res.data.sheets.map(sheet => sheet.properties))
   }
 
+  /**
+   * Get data of given range from Google spreadsheet
+   * @param {string} spreadsheetId id of Google spreadsheet
+   * @param {string} range range for the given spreadsheet
+   */
   async getSheetTable(spreadsheetId, range) {
     return this.sheets.spreadsheets.values
       .get({
@@ -39,6 +55,11 @@ class SheetsApi {
       })
   }
 
+  /**
+   * Get all data from one tab of Google spreadsheet
+   * @param {string} spreadsheetId id of Google spreadsheet
+   * @param {string} tabName name of the tab to get data
+   */
   async getFullSheetTab(spreadsheetId, tabName) {
     const take = 100
     let skip = 1
@@ -72,6 +93,13 @@ class SheetsApi {
     }
   }
 
+  /**
+   *
+   * @param {string} spreadsheetId id of Google spreadsheet
+   * @param {string[][]} rows new tab rows
+   * @param {string[]} propNames new tab property names
+   * @param {string} tabName name of the tab to save into
+   */
   async saveTabData(spreadsheetId, rows, propNames, tabName) {
     rows.unshift(propNames)
     const endLetter = String.fromCharCode(64 + propNames.length)
@@ -88,22 +116,21 @@ class SheetsApi {
   }
 
   /**
-   *
-   * @param {string} spreadsheetId
-   * @param {string[]} tabNamesFrom tabs
-   * @param {string[]} tabNameTo tab to save results
+   * Concat tabA and tabB to tabC without duplicates
+   * @param {string} spreadsheetId id of Google spreadsheet
+   * @param {string} tabA tabs
+   * @param {string} tabB tabs
+   * @param {string[]} tabC tab to save results
    * @param {string} range A google annotation
+   * @returns {TableData}
    */
-  async concatTabs(spreadsheetId, tabNamesFrom, tabNameTo) {
-    const [tabAData, tabBData] = await Promise.all([
-      this.getFullSheetTab(spreadsheetId, tabNamesFrom[0]),
-      this.getFullSheetTab(spreadsheetId, tabNamesFrom[1]),
-    ])
+  async concatTabs(spreadsheetId, tabA, tabB, tabC) {
+    const [tabAData, tabBData] = await Promise.all([this.getFullSheetTab(spreadsheetId, tabA), this.getFullSheetTab(spreadsheetId, tabB)])
     const tableAData = new TableData(tabAData.propNames, tabAData.rows, GOOGLE_MAIN_FIELDS)
     const tableBData = new TableData(tabBData.propNames, tabBData.rows, GOOGLE_MAIN_FIELDS)
-    const finalData = TableData.concatData(tableAData, tableBData)
-    await this.saveTabData(spreadsheetId, finalData.rows, finalData.propNames, tabNameTo)
-    return finalData
+    const mergedData = TableData.concatData(tableAData, tableBData)
+    await this.saveTabData(spreadsheetId, mergedData.rows, mergedData.propNames, tabC)
+    return mergedData
   }
 }
 

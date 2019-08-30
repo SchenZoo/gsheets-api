@@ -1,5 +1,4 @@
 const cors = require('cors')
-const createError = require('http-errors')
 const express = require('express')
 const apiRoutes = require('./routes')
 
@@ -16,7 +15,7 @@ app.use((req, res, next) => {
 })
 
 app.use((error, req, res, next) => {
-  return res.json({
+  return res.status(500).json({
     message: error.message,
   })
 })

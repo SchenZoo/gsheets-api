@@ -1,24 +1,16 @@
 const express = require('express')
 const router = express.Router()
-const { asyncRequest } = require('../middlewares/async-request')
 const { SheetsApi } = require('../services/sheets-api')
 
-router.get(
-  '/:id/sheet',
-  asyncRequest(async (req, res) => {
-    const sheetsApi = new SheetsApi(req)
-    return res.json(await sheetsApi.getSheetsMetadata(req.params.id))
-  }),
-)
-
-router.post(
-  '/:id/sheet_concat',
-  asyncRequest(async (req, res) => {
-    const sheetsApi = new SheetsApi(req)
-    const spreadsheetId = req.params.id
+router.post('/:id/sheet_concat', async (req, res, next) => {
+  const sheetsApi = new SheetsApi(req)
+  const spreadsheetId = req.params.id
+  try {
     const tabNames = await sheetsApi.getSheetsTabNames(spreadsheetId)
-    return res.json(await sheetsApi.concatTabs(spreadsheetId, tabNames, tabNames[2]))
-  }),
-)
+    return res.json(await sheetsApi.concatTabs(spreadsheetId, tabNames[0], tabNames[1], tabNames[2]))
+  } catch (e) {
+    next(e)
+  }
+})
 
 module.exports = router
