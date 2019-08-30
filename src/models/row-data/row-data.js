@@ -7,12 +7,12 @@ class RowData {
    * @param {string} uniqueIdentifier unique identifier for row
    */
   constructor(props, propNames, keyFieldNames, uniqueIdentifier) {
-    this.props = props
-    this.propNames = propNames
-    this.keyFieldNames = keyFieldNames
-    this.keyFields = this.props.filter((value, index) => this.keyFieldNames.includes(this.propNames[index]))
-    this.uniqueIdentifier = uniqueIdentifier
+    this.props = props;
+    this.propNames = propNames;
+    this.keyFieldNames = keyFieldNames;
+    this.keyFields = this.props.filter((value, index) => this.keyFieldNames.includes(this.propNames[index]));
+    this.uniqueIdentifier = uniqueIdentifier;
   }
 }
 
-module.exports = { RowData }
+module.exports = { RowData };

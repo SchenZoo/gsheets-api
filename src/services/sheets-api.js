@@ -1,6 +1,6 @@
-const { google } = require('googleapis')
-const { TableData } = require('../models/table-data/table-data')
-const { GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD } = require('../constants/google-main-fields')
+const { google } = require('googleapis');
+const { TableData } = require('../models/table-data/table-data');
+const { GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD } = require('../constants/google-main-fields');
 
 class SheetsApi {
   /**
@@ -8,10 +8,10 @@ class SheetsApi {
    */
   constructor(request) {
     if (!request.oauth2Client) {
-      throw new Error('Route requires google authorization')
+      throw new Error('Route requires google authorization');
     }
-    this.oauth2Client = request.oauth2Client
-    this.sheets = google.sheets({ version: 'v4', auth: this.oauth2Client })
+    this.oauth2Client = request.oauth2Client;
+    this.sheets = google.sheets({ version: 'v4', auth: this.oauth2Client });
   }
 
   /**
@@ -20,7 +20,7 @@ class SheetsApi {
    * @returns {string[]}
    */
   async getSheetsTabNames(spreadsheetId) {
-    return this.getSheetsMetadata(spreadsheetId).then(data => data.map(sheet => sheet.title))
+    return this.getSheetsMetadata(spreadsheetId).then(data => data.map(sheet => sheet.title));
   }
 
   /**
@@ -28,7 +28,7 @@ class SheetsApi {
    * @param {string} spreadsheetId id of Google spreadsheet
    */
   async getSheetsMetadata(spreadsheetId) {
-    return this.sheets.spreadsheets.get({ spreadsheetId }).then(res => res.data.sheets.map(sheet => sheet.properties))
+    return this.sheets.spreadsheets.get({ spreadsheetId }).then(res => res.data.sheets.map(sheet => sheet.properties));
   }
 
   /**
@@ -43,16 +43,16 @@ class SheetsApi {
         range,
       })
       .then(response => {
-        const rows = response.data.values
+        const rows = response.data.values;
         if (!rows) {
-          throw new Error('Empty Tab')
+          throw new Error('Empty Tab');
         }
-        const propNames = rows.splice(0, 1)[0]
+        const propNames = rows.splice(0, 1)[0];
         return {
           propNames,
           rows,
-        }
-      })
+        };
+      });
   }
 
   /**
@@ -61,36 +61,36 @@ class SheetsApi {
    * @param {string} tabName name of the tab to get data
    */
   async getFullSheetTab(spreadsheetId, tabName) {
-    const take = 100
-    let skip = 1
-    let rows = []
-    let getMore = false
+    const take = 100;
+    let skip = 1;
+    let rows = [];
+    let getMore = false;
     do {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId,
         range: `${tabName}!A${skip}:Z${take + skip - 1}`,
-      })
-      const newRows = response.data.values
+      });
+      const newRows = response.data.values;
       if (!newRows) {
         // if its not first iteration
         if (rows.length) {
-          break
+          break;
         }
         // Sheet is empty
         return {
           propNames: [],
           rows,
-        }
+        };
       }
-      rows.push(...newRows)
-      getMore = newRows.length === take
-      skip += take
-    } while (getMore)
-    const propNames = rows.splice(0, 1)[0]
+      rows.push(...newRows);
+      getMore = newRows.length === take;
+      skip += take;
+    } while (getMore);
+    const propNames = rows.splice(0, 1)[0];
     return {
       propNames,
       rows,
-    }
+    };
   }
 
   /**
@@ -101,9 +101,9 @@ class SheetsApi {
    * @param {string} tabName name of the tab to save into
    */
   async saveTabData(spreadsheetId, rows, propNames, tabName) {
-    rows.unshift(propNames)
-    const endLetter = String.fromCharCode(64 + propNames.length)
-    const range = `${tabName}!A1:${endLetter}${rows.length + 1}`
+    rows.unshift(propNames);
+    const endLetter = String.fromCharCode(64 + propNames.length);
+    const range = `${tabName}!A1:${endLetter}${rows.length + 1}`;
     return this.sheets.spreadsheets.values.update({
       auth: this.oauth2Client,
       spreadsheetId,
@@ -112,7 +112,7 @@ class SheetsApi {
       resource: {
         values: rows,
       },
-    })
+    });
   }
 
   /**
@@ -125,15 +125,15 @@ class SheetsApi {
    * @returns {TableData}
    */
   async concatTabs(spreadsheetId, tabA, tabB, tabC) {
-    const [tabAData, tabBData] = await Promise.all([this.getFullSheetTab(spreadsheetId, tabA), this.getFullSheetTab(spreadsheetId, tabB)])
-    const tableAData = new TableData(tabAData.propNames, tabAData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD)
-    const tableBData = new TableData(tabBData.propNames, tabBData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD)
-    const mergedData = TableData.concatData(tableAData, tableBData)
-    await this.saveTabData(spreadsheetId, mergedData.rows, mergedData.propNames, tabC)
-    return mergedData
+    const [tabAData, tabBData] = await Promise.all([this.getFullSheetTab(spreadsheetId, tabA), this.getFullSheetTab(spreadsheetId, tabB)]);
+    const tableAData = new TableData(tabAData.propNames, tabAData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD);
+    const tableBData = new TableData(tabBData.propNames, tabBData.rows, GOOGLE_MAIN_FIELDS, GOOGLE_UNIQUE_FIELD);
+    const mergedData = TableData.concatData(tableAData, tableBData);
+    await this.saveTabData(spreadsheetId, mergedData.rows, mergedData.propNames, tabC);
+    return mergedData;
   }
 }
 
 module.exports = {
   SheetsApi,
-}
+};
